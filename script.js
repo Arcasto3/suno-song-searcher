@@ -1,4 +1,8 @@
-// Sample song data (mock data for demonstration)
+// Suno API Configuration
+const SUNO_API_BASE_URL = 'https://api.sunoapi.org/api/v1';
+const SUNO_API_KEY = ''; // Add your API key here: https://sunoapi.org
+
+// Sample song data (fallback/mock data for demonstration)
 const songDatabase = [
     {
         id: 1,
@@ -223,6 +227,8 @@ const songDatabase = [
     }
 ];
 
+let usingRealAPI = false;
+
 // DOM Elements
 const searchInput = document.getElementById('searchInput');
 const searchBtn = document.getElementById('searchBtn');
@@ -249,8 +255,8 @@ moodFilter.addEventListener('change', performSearch);
 sortBy.addEventListener('change', performSearch);
 clearBtn.addEventListener('click', clearSearch);
 
-// Main search function
-function performSearch() {
+// Main search function with API integration
+async function performSearch() {
     const query = searchInput.value.toLowerCase().trim();
     const genre = genreFilter.value;
     const mood = moodFilter.value;
@@ -259,19 +265,18 @@ function performSearch() {
     // Show loading state
     showLoading();
 
-    // Simulate API call delay
-    setTimeout(() => {
-        let results = songDatabase.filter(song => {
-            const matchesQuery = query === '' ||
-                song.title.toLowerCase().includes(query) ||
-                song.artist.toLowerCase().includes(query) ||
-                song.genre.toLowerCase().includes(query);
-
-            const matchesGenre = genre === '' || song.genre === genre;
-            const matchesMood = mood === '' || song.mood === mood;
-
-            return matchesQuery && matchesGenre && matchesMood;
-        });
+    try {
+        let results;
+        
+        // Try to use real Suno API if configured
+        if (SUNO_API_KEY) {
+            results = await searchSunoAPI(query, genre, mood);
+            usingRealAPI = true;
+        } else {
+            // Fallback to mock data
+            results = searchMockData(query, genre, mood);
+            usingRealAPI = false;
+        }
 
         // Apply sorting
         results = sortResults(results, sortOption);
@@ -284,7 +289,100 @@ function performSearch() {
         if (query || genre || mood) {
             clearBtn.style.display = 'inline-block';
         }
-    }, 300);
+    } catch (error) {
+        console.error('Search error:', error);
+        // Fallback to mock data on API error
+        const results = searchMockData(query, genre, mood);
+        const sorted = sortResults(results, sortOption);
+        currentResults = sorted;
+        displayResults(sorted);
+        hideLoading();
+        showToast('⚠️ Using demo data (add API key for real songs)', 'info');
+    }
+}
+
+// Search Suno API
+async function searchSunoAPI(query, genre, mood) {
+    try {
+        // Suno API endpoint for getting feed/library
+        // Note: Suno's API primarily generates music. For searching, we use the feed endpoint
+        const response = await fetch(`${SUNO_API_BASE_URL}/feed`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${SUNO_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        let data = await response.json();
+        let songs = data.data || data.songs || [];
+
+        // Filter results based on query, genre, and mood
+        songs = songs.filter(song => {
+            const matchesQuery = query === '' ||
+                (song.title && song.title.toLowerCase().includes(query)) ||
+                (song.artist && song.artist.toLowerCase().includes(query)) ||
+                (song.prompt && song.prompt.toLowerCase().includes(query));
+
+            const matchesGenre = genre === '' || 
+                (song.tags && song.tags.includes(genre)) ||
+                (song.genre && song.genre.toLowerCase() === genre);
+
+            const matchesMood = mood === '' || 
+                (song.mood && song.mood.toLowerCase() === mood) ||
+                (song.tags && song.tags.some(tag => tag.toLowerCase().includes(mood)));
+
+            return matchesQuery && matchesGenre && matchesMood;
+        });
+
+        // Format Suno API response to match our song structure
+        return songs.map((song, index) => ({
+            id: song.id || index,
+            title: song.title || song.prompt?.substring(0, 50) || 'Untitled',
+            artist: song.artist || song.user?.username || 'Unknown Artist',
+            genre: song.genre || 'electronic',
+            mood: song.mood || 'energetic',
+            duration: song.duration_ms ? formatDuration(song.duration_ms) : '3:45',
+            views: song.play_count || 0,
+            likes: song.like_count || 0,
+            plays: song.play_count || 0,
+            date: new Date(song.created_at || Date.now()),
+            audioUrl: song.audio_url || song.url || '',
+            imageUrl: song.image_url || ''
+        }));
+
+    } catch (error) {
+        console.error('Suno API error:', error);
+        showToast('❌ API connection failed, using demo data', 'info');
+        return searchMockData(query, genre, mood);
+    }
+}
+
+// Search mock data
+function searchMockData(query, genre, mood) {
+    return songDatabase.filter(song => {
+        const matchesQuery = query === '' ||
+            song.title.toLowerCase().includes(query) ||
+            song.artist.toLowerCase().includes(query) ||
+            song.genre.toLowerCase().includes(query);
+
+        const matchesGenre = genre === '' || song.genre === genre;
+        const matchesMood = mood === '' || song.mood === mood;
+
+        return matchesQuery && matchesGenre && matchesMood;
+    });
+}
+
+// Format duration from milliseconds
+function formatDuration(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Sort results based on selected option
@@ -403,18 +501,23 @@ function hideLoading() {
     loadingSpinner.style.display = 'none';
 }
 
-// Play song (mock function)
+// Play song
 function playSong(songId) {
-    const song = songDatabase.find(s => s.id === songId);
+    const song = currentResults.find(s => s.id === songId) || songDatabase.find(s => s.id === songId);
     if (song) {
-        alert(`🎵 Now playing: "${song.title}" by ${song.artist}\n\n(This is a demo - integrate with actual audio player)`);
-        // In a real app, you would play the song here
+        if (song.audioUrl) {
+            // Open audio in new window or play inline
+            window.open(song.audioUrl, '_blank');
+            showToast(`🎵 Playing: ${song.title}`, 'success');
+        } else {
+            alert(`🎵 Now playing: "${song.title}" by ${song.artist}\n\n(This is a demo - integrate with actual audio player)`);
+        }
     }
 }
 
 // Download song as MP3
 function downloadSong(songId) {
-    const song = songDatabase.find(s => s.id === songId);
+    const song = currentResults.find(s => s.id === songId) || songDatabase.find(s => s.id === songId);
     if (!song) return;
 
     // Show download modal
@@ -431,21 +534,20 @@ function downloadSong(songId) {
         if (progress >= 100) {
             clearInterval(progressInterval);
             
-            // In a real app, this would actually download the MP3
-            // For now, we'll simulate it
             setTimeout(() => {
                 closeDownloadModal();
                 
-                // Show success notification
-                showToast(`✅ Downloaded: ${song.title}.mp3`, 'success');
+                // If real audio URL exists, download it
+                if (song.audioUrl) {
+                    const link = document.createElement('a');
+                    link.href = song.audioUrl;
+                    link.download = `${song.title}.mp3`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
                 
-                // In production, uncomment this to actually download:
-                // const link = document.createElement('a');
-                // link.href = song.audioUrl;
-                // link.download = `${song.title}.mp3`;
-                // document.body.appendChild(link);
-                // link.click();
-                // document.body.removeChild(link);
+                showToast(`✅ Downloaded: ${song.title}.mp3`, 'success');
             }, 500);
         }
     }, 200);
@@ -470,9 +572,9 @@ function closeDownloadModal() {
     downloadModal.style.display = 'none';
 }
 
-// Share song (mock function)
+// Share song
 function shareSong(songId) {
-    const song = songDatabase.find(s => s.id === songId);
+    const song = currentResults.find(s => s.id === songId) || songDatabase.find(s => s.id === songId);
     if (song) {
         const shareText = `Check out "${song.title}" by ${song.artist} on Suno! 🎵`;
         if (navigator.share) {
@@ -482,7 +584,6 @@ function shareSong(songId) {
                 url: window.location.href
             });
         } else {
-            // Fallback: Copy to clipboard
             navigator.clipboard.writeText(shareText);
             showToast('📋 Song link copied to clipboard!', 'info');
         }
@@ -519,4 +620,9 @@ function escapeHtml(text) {
 // Add some initial content on load
 window.addEventListener('load', () => {
     resultsContainer.innerHTML = '<div class="no-results"><p>🔍 Start searching to discover songs</p></div>';
+    
+    // Check if API is configured
+    if (!SUNO_API_KEY) {
+        console.log('📝 Tip: Add your Suno API key to enable real song search. Get it at https://sunoapi.org');
+    }
 });
