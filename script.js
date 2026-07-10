@@ -10,7 +10,8 @@ const songDatabase = [
         views: 5240,
         likes: 892,
         plays: 1203,
-        date: new Date("2024-01-15")
+        date: new Date("2024-01-15"),
+        audioUrl: "https://example.com/songs/midnight-dreams.mp3"
     },
     {
         id: 2,
@@ -22,7 +23,8 @@ const songDatabase = [
         views: 8921,
         likes: 1540,
         plays: 2104,
-        date: new Date("2024-01-14")
+        date: new Date("2024-01-14"),
+        audioUrl: "https://example.com/songs/electric-nights.mp3"
     },
     {
         id: 3,
@@ -34,7 +36,8 @@ const songDatabase = [
         views: 3421,
         likes: 654,
         plays: 782,
-        date: new Date("2024-01-13")
+        date: new Date("2024-01-13"),
+        audioUrl: "https://example.com/songs/rainy-sunday.mp3"
     },
     {
         id: 4,
@@ -46,7 +49,8 @@ const songDatabase = [
         views: 12340,
         likes: 2103,
         plays: 3456,
-        date: new Date("2024-01-12")
+        date: new Date("2024-01-12"),
+        audioUrl: "https://example.com/songs/cosmic-journey.mp3"
     },
     {
         id: 5,
@@ -58,7 +62,8 @@ const songDatabase = [
         views: 15670,
         likes: 2845,
         plays: 4123,
-        date: new Date("2024-01-11")
+        date: new Date("2024-01-11"),
+        audioUrl: "https://example.com/songs/summer-vibes.mp3"
     },
     {
         id: 6,
@@ -70,7 +75,8 @@ const songDatabase = [
         views: 9876,
         likes: 1876,
         plays: 2456,
-        date: new Date("2024-01-10")
+        date: new Date("2024-01-10"),
+        audioUrl: "https://example.com/songs/rock-anthem.mp3"
     },
     {
         id: 7,
@@ -82,7 +88,8 @@ const songDatabase = [
         views: 4567,
         likes: 923,
         plays: 1234,
-        date: new Date("2024-01-09")
+        date: new Date("2024-01-09"),
+        audioUrl: "https://example.com/songs/jazz-night.mp3"
     },
     {
         id: 8,
@@ -94,7 +101,8 @@ const songDatabase = [
         views: 6789,
         likes: 1234,
         plays: 1876,
-        date: new Date("2024-01-08")
+        date: new Date("2024-01-08"),
+        audioUrl: "https://example.com/songs/dark-whispers.mp3"
     },
     {
         id: 9,
@@ -106,7 +114,8 @@ const songDatabase = [
         views: 10234,
         likes: 2104,
         plays: 2876,
-        date: new Date("2024-01-07")
+        date: new Date("2024-01-07"),
+        audioUrl: "https://example.com/songs/city-lights.mp3"
     },
     {
         id: 10,
@@ -118,7 +127,8 @@ const songDatabase = [
         views: 7654,
         likes: 1432,
         plays: 2103,
-        date: new Date("2024-01-06")
+        date: new Date("2024-01-06"),
+        audioUrl: "https://example.com/songs/classical-beauty.mp3"
     },
     {
         id: 11,
@@ -130,7 +140,8 @@ const songDatabase = [
         views: 8932,
         likes: 1654,
         plays: 2345,
-        date: new Date("2024-01-05")
+        date: new Date("2024-01-05"),
+        audioUrl: "https://example.com/songs/deep-house.mp3"
     },
     {
         id: 12,
@@ -142,7 +153,8 @@ const songDatabase = [
         views: 5432,
         likes: 987,
         plays: 1432,
-        date: new Date("2024-01-04")
+        date: new Date("2024-01-04"),
+        audioUrl: "https://example.com/songs/morning-light.mp3"
     }
 ];
 
@@ -156,6 +168,8 @@ const clearBtn = document.getElementById('clearBtn');
 const resultsContainer = document.getElementById('resultsContainer');
 const resultsCount = document.getElementById('resultsCount');
 const loadingSpinner = document.getElementById('loadingSpinner');
+const downloadModal = document.getElementById('downloadModal');
+const toast = document.getElementById('toast');
 
 let currentResults = [];
 
@@ -293,6 +307,7 @@ function createSongCard(song) {
 
         <div class="song-actions">
             <button class="action-btn play-btn" onclick="playSong(${song.id})">▶️ Play</button>
+            <button class="action-btn download-btn" onclick="downloadSong(${song.id})">⬇️ Download</button>
             <button class="action-btn share-btn" onclick="shareSong(${song.id})">📤 Share</button>
         </div>
     `;
@@ -332,6 +347,64 @@ function playSong(songId) {
     }
 }
 
+// Download song as MP3
+function downloadSong(songId) {
+    const song = songDatabase.find(s => s.id === songId);
+    if (!song) return;
+
+    // Show download modal
+    showDownloadModal(song.title);
+
+    // Simulate download with progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 100) progress = 100;
+        
+        updateDownloadProgress(progress);
+
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+            
+            // In a real app, this would actually download the MP3
+            // For now, we'll simulate it
+            setTimeout(() => {
+                closeDownloadModal();
+                
+                // Show success notification
+                showToast(`✅ Downloaded: ${song.title}.mp3`, 'success');
+                
+                // In production, uncomment this to actually download:
+                // const link = document.createElement('a');
+                // link.href = song.audioUrl;
+                // link.download = `${song.title}.mp3`;
+                // document.body.appendChild(link);
+                // link.click();
+                // document.body.removeChild(link);
+            }, 500);
+        }
+    }, 200);
+}
+
+// Show download progress modal
+function showDownloadModal(songTitle) {
+    document.getElementById('downloadSongName').textContent = `Downloading: ${escapeHtml(songTitle)}.mp3`;
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('downloadStatus').textContent = '0%';
+    downloadModal.style.display = 'flex';
+}
+
+// Update download progress
+function updateDownloadProgress(percent) {
+    document.getElementById('progressFill').style.width = percent + '%';
+    document.getElementById('downloadStatus').textContent = Math.round(percent) + '%';
+}
+
+// Close download modal
+function closeDownloadModal() {
+    downloadModal.style.display = 'none';
+}
+
 // Share song (mock function)
 function shareSong(songId) {
     const song = songDatabase.find(s => s.id === songId);
@@ -346,9 +419,19 @@ function shareSong(songId) {
         } else {
             // Fallback: Copy to clipboard
             navigator.clipboard.writeText(shareText);
-            alert('Song link copied to clipboard!');
+            showToast('📋 Song link copied to clipboard!', 'info');
         }
     }
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
 }
 
 // Utility functions
