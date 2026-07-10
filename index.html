@@ -59,7 +59,10 @@
 
         <div class="results-info">
             <span id="resultsCount">0 results found</span>
-            <button id="clearBtn" class="clear-btn" style="display:none;">Clear All</button>
+            <div class="action-buttons">
+                <button id="downloadBtn" class="download-results-btn" style="display:none;" title="Download results as JSON">📥 Download Results</button>
+                <button id="clearBtn" class="clear-btn" style="display:none;">Clear All</button>
+            </div>
         </div>
 
         <div class="results-container" id="resultsContainer">
@@ -72,6 +75,23 @@
             <div class="spinner"></div>
             <p>Searching for songs...</p>
         </div>
+
+        <!-- Download Progress Modal -->
+        <div class="modal" id="downloadModal" style="display:none;">
+            <div class="modal-content">
+                <h2>📥 Download Results</h2>
+                <p>Choose download format:</p>
+                <div class="download-options">
+                    <button class="download-format-btn" onclick="downloadAsJSON()">📄 JSON Format</button>
+                    <button class="download-format-btn" onclick="downloadAsCSV()">📊 CSV Format</button>
+                    <button class="download-format-btn" onclick="downloadAsText()">📝 Text Format</button>
+                </div>
+                <button class="close-modal-btn" onclick="closeDownloadModal()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Toast notification -->
+        <div class="toast" id="toast"></div>
     </div>
 
     <script src="script.js"></script>
