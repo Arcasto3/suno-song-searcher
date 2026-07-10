@@ -155,6 +155,71 @@ const songDatabase = [
         plays: 1432,
         date: new Date("2024-01-04"),
         audioUrl: "https://example.com/songs/morning-light.mp3"
+    },
+    {
+        id: 13,
+        title: "Phonk Nights",
+        artist: "Phunk Master",
+        genre: "phonk",
+        mood: "dark",
+        duration: "3:22",
+        views: 14523,
+        likes: 2987,
+        plays: 3876,
+        date: new Date("2024-01-16"),
+        audioUrl: "https://example.com/songs/phonk-nights.mp3"
+    },
+    {
+        id: 14,
+        title: "Street Vibes",
+        artist: "Phonk King",
+        genre: "phonk",
+        mood: "energetic",
+        duration: "4:01",
+        views: 18765,
+        likes: 3421,
+        plays: 4567,
+        date: new Date("2024-01-17"),
+        audioUrl: "https://example.com/songs/street-vibes.mp3"
+    },
+    {
+        id: 15,
+        title: "Dark Highway",
+        artist: "Phonk Rider",
+        genre: "phonk",
+        mood: "dark",
+        duration: "3:45",
+        views: 12456,
+        likes: 2654,
+        plays: 3456,
+        date: new Date("2024-01-18"),
+        audioUrl: "https://example.com/songs/dark-highway.mp3"
+    },
+    {
+        id: 16,
+        title: "Underground Beat",
+        artist: "Phonk Flex",
+        genre: "phonk",
+        mood: "energetic",
+        duration: "3:33",
+        views: 16789,
+        likes: 3098,
+        plays: 4123,
+        date: new Date("2024-01-19"),
+        audioUrl: "https://example.com/songs/underground-beat.mp3"
+    },
+    {
+        id: 17,
+        title: "Midnight Phonk",
+        artist: "Trap Phonk",
+        genre: "phonk",
+        mood: "dark",
+        duration: "3:56",
+        views: 13421,
+        likes: 2876,
+        plays: 3765,
+        date: new Date("2024-01-20"),
+        audioUrl: "https://example.com/songs/midnight-phonk.mp3"
     }
 ];
 
